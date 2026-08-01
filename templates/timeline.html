@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Health Timeline - Dooper AI Healthcare{% endblock %}
+{% block page_title %}Comprehensive Health Timeline{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 950px; margin: 0 auto; padding: 20px 0;">
+
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-top: 0; margin-bottom: 24px;">Patient Journey & Event Chronology</h2>
+
+        {% if events %}
+            <div style="position: relative; padding-left: 30px; border-left: 3px solid #E2E8F0;">
+                {% for evt in events %}
+                <div style="position: relative; margin-bottom: 28px;">
+                    <!-- Timeline Dot -->
+                    <div style="position: absolute; left: -39px; top: 0; width: 18px; height: 18px; border-radius: 50%; background: #3B82F6; border: 4px solid #ffffff; box-shadow: 0 0 0 2px #3B82F6;"></div>
+                    
+                    <div style="background: var(--bg-hover, #F8FAFC); padding: 18px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+                                {{ evt.event_type }}
+                            </span>
+                            <span style="font-size: 0.85rem; color: #888;">{{ evt.event_date }}</span>
+                        </div>
+                        <h4 style="margin: 6px 0; font-size: 1.1rem; font-weight: 700; color: var(--text-color);">{{ evt.title }}</h4>
+                        <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary, #666); line-height: 1.5;">{{ evt.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 50px 20px; color: #888;">
+                <i class="fa-solid fa-timeline" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px;"></i>
+                <p style="font-size: 1.1rem; margin: 0;">No health timeline events recorded yet. Complete consultations or upload reports to build your health timeline!</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

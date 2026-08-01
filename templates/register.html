@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Dooper AI Symptom Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="auth-wrapper" style="padding: 40px 20px;">
+        <div class="auth-card" style="max-width: 520px;">
+            <div class="auth-header">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Dooper Logo" style="max-height: 45px; margin-bottom: 10px;" onerror="this.outerHTML='<span class=\'logo-text\'>DOOPER</span>';">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Register to begin checking symptoms and getting specialist recommendations</p>
+            </div>
+            
+            <form action="{{ url_for('register') }}" method="POST" onsubmit="return validateRegisterForm()" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group">
+                    <label for="name" class="form-label">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="john.doe@example.com" required autocomplete="email">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="new-password">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="••••••••" required autocomplete="new-password">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                    <i class="fa-solid fa-user-plus"></i> Register Account
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--text-muted);">
+                Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const flashes = document.querySelectorAll('.flash-message');
+            flashes.forEach(f => {
+                f.style.transition = 'opacity 0.5s ease-out';
+                f.style.opacity = '0';
+                setTimeout(() => f.remove(), 500);
+            });
+        }, 4000);
+
+        function validateRegisterForm() {
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm_password").value;
+
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return false;
+            }
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>

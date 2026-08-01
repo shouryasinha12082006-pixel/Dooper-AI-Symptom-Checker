@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Explainable AI Clinical Dashboard - Dooper AI{% endblock %}
+{% block page_title %}Explainable AI Dashboard & Decision Matrix{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1050px; margin: 0 auto; padding: 20px 0;">
+
+    <!-- Overview Banner -->
+    <div class="card" style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); color: white; border-radius: 16px; padding: 28px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <span style="background: rgba(59, 130, 246, 0.2); color: #60A5FA; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">
+                    Assessment #{{ assessment.id }}
+                </span>
+                <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 10px; margin-bottom: 8px;">Primary Suspect: {{ triage.primary_condition }}</h2>
+                <p style="color: #94A3B8; margin: 0; font-size: 1rem;">Transparent multi-agent diagnostic breakdown and clinical reasoning trail.</p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 2.2rem; font-weight: 800; color: #10B981;">{{ triage.explainable_ai.overall_confidence }}%</div>
+                <div style="font-size: 0.85rem; color: #94A3B8;">Confidence Score</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Contributions Breakdown Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        {% for agent_name, summary in triage.explainable_ai.agent_contributions.items() %}
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 14px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59, 130, 246, 0.1); color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700;">{{ agent_name }}</h4>
+            </div>
+            <p style="color: var(--text-secondary, #555); font-size: 0.92rem; margin: 0; line-height: 1.5;">{{ summary }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Clinical Reasoning & Evidence Matrix -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        
+        <!-- Supporting vs Missing Symptoms -->
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Symptom Correlation Matrix</h3>
+            
+            <div style="margin-bottom: 18px;">
+                <h4 style="font-size: 0.95rem; color: #10B981; font-weight: 700; margin-bottom: 8px;">
+                    <i class="fa-solid fa-circle-check"></i> Supporting Symptoms Present
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-color);">
+                    {% for item in triage.explainable_ai.supporting_symptoms %}
+                        <li style="margin-bottom: 6px;">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="font-size: 0.95rem; color: #EF4444; font-weight: 700; margin-bottom: 8px;">
+                    <i class="fa-solid fa-circle-xmark"></i> Missing Expected Symptoms
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary, #666);">
+                    {% for item in triage.explainable_ai.missing_symptoms %}
+                        <li style="margin-bottom: 6px;">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Medical Evidence & Standard Codes -->
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Trusted Medical Evidence</h3>
+            
+            <div style="margin-bottom: 16px;">
+                <span style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Standard ICD-10 Code</span>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #3B82F6;">{{ triage.medical_knowledge.icd10 }}</div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <span style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Reference Sources</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+                    {% for src in triage.medical_knowledge.sources %}
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
+                            {{ src }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <span style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Clinical Guideline Summary</span>
+                <p style="margin-top: 6px; font-size: 0.95rem; line-height: 1.5; color: var(--text-color);">
+                    {{ triage.medical_knowledge.evidence_summary }}
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Personalized Care Plan & Services -->
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Recommended Dooper Healthcare Services</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            {% for srv in triage.dooper_services %}
+            <div style="background: var(--bg-hover, #F8FAFC); padding: 16px; border-radius: 12px; border-left: 4px solid #3B82F6;">
+                <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: #3B82F6;">{{ srv.service }}</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary, #666);">{{ srv.reason }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

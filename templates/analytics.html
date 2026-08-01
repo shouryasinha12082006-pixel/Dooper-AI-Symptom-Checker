@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Healthcare Analytics Dashboard - Dooper AI{% endblock %}
+{% block page_title %}Healthcare Insights & Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1050px; margin: 0 auto; padding: 20px 0;">
+
+    <!-- Top KPI Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <div style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Total Consultations</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #3B82F6; margin-top: 6px;">{{ stats.total }}</div>
+            <div style="font-size: 0.8rem; color: #10B981; margin-top: 4px;"><i class="fa-solid fa-arrow-up"></i> Active Medical Tracking</div>
+        </div>
+
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <div style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Health Improvement Score</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #10B981; margin-top: 6px;">{{ health_score }}/100</div>
+            <div style="font-size: 0.8rem; color: #10B981; margin-top: 4px;">Optimal Progression</div>
+        </div>
+
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <div style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Parsed Lab Reports</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #8B5CF6; margin-top: 6px;">{{ reports | length }}</div>
+            <div style="font-size: 0.8rem; color: #8B5CF6; margin-top: 4px;">Correlated Biomarkers</div>
+        </div>
+
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <div style="font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase;">Risk Indicator</div>
+            {% if stats.severe > 0 %}
+                <div style="font-size: 2.2rem; font-weight: 800; color: #EF4444; margin-top: 6px;">Elevated</div>
+            {% else %}
+                <div style="font-size: 2.2rem; font-weight: 800; color: #10B981; margin-top: 6px;">Low Risk</div>
+            {% endif %}
+            <div style="font-size: 0.8rem; color: #666; margin-top: 4px;">Based on triage history</div>
+        </div>
+    </div>
+
+    <!-- Chronic Disease Monitoring & Lifestyle Summary -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
+                <i class="fa-solid fa-notes-medical" style="color: #3B82F6;"></i> Chronic Disease Monitoring
+            </h3>
+            {% if profile.chronic_diseases %}
+                <div style="padding: 16px; background: rgba(59, 130, 246, 0.08); border-radius: 12px; border-left: 4px solid #3B82F6; margin-bottom: 12px;">
+                    <div style="font-weight: 700; color: #1E40AF;">Monitored Conditions</div>
+                    <div style="margin-top: 4px; font-size: 0.95rem;">{{ profile.chronic_diseases }}</div>
+                </div>
+            {% else %}
+                <p style="color: var(--text-secondary, #666);">No chronic diseases registered in patient profile.</p>
+            {% endif %}
+
+            <div style="margin-top: 16px;">
+                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">Active Medications</div>
+                <div style="font-size: 0.95rem; color: var(--text-secondary, #555);">{{ profile.current_medications or 'None recorded' }}</div>
+            </div>
+        </div>
+
+        <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
+                <i class="fa-solid fa-calendar-week" style="color: #F59E0B;"></i> Weekly & Monthly Insights
+            </h3>
+            <ul style="padding-left: 20px; color: var(--text-secondary, #555); margin: 0; line-height: 1.8;">
+                <li>Stable vital trends recorded over the last 30 days.</li>
+                <li>No acute red-flag emergency events triggered.</li>
+                <li>Adherence to hydration and exercise recommendations is optimal.</li>
+                <li>Follow-up lab evaluation suggested in 30 days.</li>
+            </ul>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

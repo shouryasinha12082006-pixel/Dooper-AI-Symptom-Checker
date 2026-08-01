@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dooper AI Symptom Checker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Dooper Logo" style="max-height: 45px; margin-bottom: 10px;" onerror="this.outerHTML='<span class=\'logo-text\'>DOOPER</span>';">
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Login to access the AI Symptom Checker & Doctor Recommendation Portal</p>
+            </div>
+            
+            <form action="{{ url_for('login') }}" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="patient@dooper.com" required autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--text-muted);">
+                Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">Register here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const flashes = document.querySelectorAll('.flash-message');
+            flashes.forEach(f => {
+                f.style.transition = 'opacity 0.5s ease-out';
+                f.style.opacity = '0';
+                setTimeout(() => f.remove(), 500);
+            });
+        }, 4000);
+    </script>
+</body>
+</html>

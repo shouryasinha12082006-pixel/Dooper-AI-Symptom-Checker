@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}History - Dooper AI Symptom Checker{% endblock %}
+{% block page_title %}Assessment History{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3 class="card-title">
+        <i class="fa-solid fa-filter" style="color: var(--primary-color);"></i>
+        Filter Assessments
+    </h3>
+    
+    <form action="{{ url_for('history') }}" method="GET" class="history-filters">
+        <div class="form-group">
+            <label for="search" class="form-label">Search Symptoms/Conditions</label>
+            <input type="text" id="search" name="search" class="form-control" placeholder="Search..." value="{{ request.args.get('search', '') }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="severity" class="form-label">Severity</label>
+            <select id="severity" name="severity" class="form-control">
+                <option value="">All Severities</option>
+                <option value="Mild" {% if request.args.get('severity') == 'Mild' %}selected{% endif %}>Mild</option>
+                <option value="Moderate" {% if request.args.get('severity') == 'Moderate' %}selected{% endif %}>Moderate</option>
+                <option value="Severe" {% if request.args.get('severity') == 'Severe' %}selected{% endif %}>Severe</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" id="date" name="date" class="form-control" value="{{ request.args.get('date', '') }}">
+        </div>
+        
+        <div class="btn-group" style="margin-bottom: 4px;">
+            <button type="submit" class="btn btn-primary" style="padding: 12px 20px;">
+                <i class="fa-solid fa-magnifying-glass"></i> Filter
+            </button>
+            <a href="{{ url_for('history') }}" class="btn btn-secondary" style="padding: 12px 20px;">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="padding: 0; overflow-x: auto;">
+    {% if assessments %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Symptoms</th>
+                    <th>Assessment</th>
+                    <th>Severity</th>
+                    <th>Recommended Specialty</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in assessments %}
+                    <tr>
+                        <td style="white-space: nowrap; font-weight: 500;">{{ item.created_at[:10] }}</td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ item.symptoms }}
+                        </td>
+                        <td style="font-weight: 600;">{{ item.condition_name }}</td>
+                        <td>
+                            <span class="badge badge-{{ item.severity | lower }}">{{ item.severity }}</span>
+                        </td>
+                        <td style="font-weight: 500;">{{ item.recommended_specialty }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 8px;">
+                                <a href="{{ url_for('assessment_detail', assessment_id=item.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">
+                                    <i class="fa-solid fa-file-medical"></i> View
+                                </a>
+                                
+                                <form action="{{ url_for('delete_assessment', assessment_id=item.id) }}" method="POST" onsubmit="return confirm('Are you sure?');" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px;">
+            <i class="fa-solid fa-box-open" style="font-size: 40px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+            No matching assessments found in your history.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dooper AI Symptom Checker & Doctor Recommendation{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="{% if theme == 'dark' %}dark-mode{% endif %}">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="app-container">
+        <!-- Mobile Sidebar Backdrop Overlay -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleMobileSidebar()"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Dooper Logo" class="logo-img" onerror="this.outerHTML='<span class=\'logo-text\'>DOOPER</span>';">
+            </div>
+            
+            <nav class="nav-links">
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}">
+                    <i class="fa-solid fa-house-medical"></i>
+                    <span>Triage Consultation</span>
+                </a>
+                <a href="{{ url_for('patient_profile') }}" class="nav-link {% if request.path == url_for('patient_profile') %}active{% endif %}">
+                    <i class="fa-solid fa-id-card-clip"></i>
+                    <span>Health Profile</span>
+                </a>
+                <a href="{{ url_for('report_analytics') }}" class="nav-link {% if request.path == url_for('report_analytics') %}active{% endif %}">
+                    <i class="fa-solid fa-file-waveform"></i>
+                    <span>Report Correlation</span>
+                </a>
+                <a href="{{ url_for('health_timeline') }}" class="nav-link {% if request.path == url_for('health_timeline') %}active{% endif %}">
+                    <i class="fa-solid fa-timeline"></i>
+                    <span>Health Timeline</span>
+                </a>
+                <a href="{{ url_for('reminders') }}" class="nav-link {% if request.path == url_for('reminders') %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Smart Reminders</span>
+                </a>
+                <a href="{{ url_for('analytics_dashboard') }}" class="nav-link {% if request.path == url_for('analytics_dashboard') %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Analytics Hub</span>
+                </a>
+                <a href="{{ url_for('doctor_dashboard') }}" class="nav-link {% if request.path == url_for('doctor_dashboard') %}active{% endif %}">
+                    <i class="fa-solid fa-user-md"></i>
+                    <span>Doctor Dashboard</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-summary">
+                    <div class="avatar" style="--avatar-bg: {{ get_avatar_color(user_name) }}; background-color: var(--avatar-bg);">
+                        {{ user_name[0] | upper if user_name else 'P' }}
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">{{ user_name or 'Patient' }}</span>
+                        <span class="user-role">Patient Profile</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="nav-link" style="color: var(--danger-color); background: none; padding: 12px 16px;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="mobile-nav-toggle" onclick="toggleMobileSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Theme Toggle Switch -->
+                    <button class="btn btn-secondary" onclick="toggleTheme()" style="padding: 8px 12px;">
+                        <i class="fa-solid {% if theme == 'dark' %}fa-sun{% else %}fa-moon{% endif %}" id="themeIcon"></i>
+                    </button>
+                </div>
+            </header>
+            
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Hide flash messages after 4 seconds
+        setTimeout(() => {
+            const flashes = document.querySelectorAll('.flash-message');
+            flashes.forEach(f => {
+                f.style.transition = 'opacity 0.5s ease-out';
+                f.style.opacity = '0';
+                setTimeout(() => f.remove(), 500);
+            });
+        }, 4000);
+
+        function toggleMobileSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.toggle('active-mobile');
+            backdrop.classList.toggle('active-mobile');
+        }
+
+        function toggleTheme() {
+            const icon = document.getElementById('themeIcon');
+            // Apply rotation animation
+            icon.style.transform = 'rotate(360deg)';
+            
+            fetch('/toggle-theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Timeout to let the rotation finish
+                    setTimeout(() => {
+                        document.body.classList.toggle('dark-mode');
+                        if (document.body.classList.contains('dark-mode')) {
+                            icon.className = 'fa-solid fa-sun';
+                        } else {
+                            icon.className = 'fa-solid fa-moon';
+                        }
+                        icon.style.transform = 'rotate(0deg)';
+                    }, 200);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

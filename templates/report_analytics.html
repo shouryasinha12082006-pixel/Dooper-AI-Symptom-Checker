@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Report Correlation & Trend Analysis - Dooper AI{% endblock %}
+{% block page_title %}Intelligent Report Correlation & Biomarker Trends{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container" style="max-width: 1050px; margin: 0 auto; padding: 20px 0;">
+    
+    <!-- Upload / Manual Text Parser Card -->
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-file-medical" style="color: #3B82F6;"></i> Medical Report Agent Parsing
+        </h3>
+        <p style="color: var(--text-secondary, #666); margin-bottom: 20px; font-size: 0.95rem;">Paste report findings or OCR text. The Medical Report Agent will automatically parse blood sugar, hemoglobin, cholesterol, and Vitamin D parameters to generate intelligent trend correlations over time.</p>
+        
+        <form action="{{ url_for('report_analytics') }}" method="POST">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Report Title / Diagnostic Center</label>
+                    <input type="text" name="report_name" class="form-control" placeholder="e.g. Complete Blood Count & Lipid Profile - Metropolis Diagnostics" required>
+                </div>
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Report Date</label>
+                    <input type="date" name="report_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: 600; margin-bottom: 6px; display: block;">Report Content / OCR Text</label>
+                <textarea name="report_text" class="form-control" rows="4" placeholder="Paste report text here, e.g. Glucose: 165 mg/dL, Hemoglobin: 11.2 g/dL, Cholesterol: 210 mg/dL, Vitamin D: 18 ng/mL..." required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600; border-radius: 8px;">
+                <i class="fa-solid fa-microscope" style="margin-right: 8px;"></i> Process & Correlate Biomarkers
+            </button>
+        </form>
+    </div>
+
+    <!-- Trend Correlation Chart Card -->
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-chart-line" style="color: #10B981;"></i> Biomarker Trend Analysis Chart
+        </h3>
+        {% if reports %}
+            <div style="height: 320px; position: relative;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary, #888);">
+                <i class="fa-solid fa-chart-area" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px;"></i>
+                <p>No report history available yet. Process a report above to generate trend correlations!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Historical Reports History -->
+    {% if reports %}
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Parsed Report Records</h3>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color, #eee);">
+                        <th style="padding: 10px;">Date</th>
+                        <th style="padding: 10px;">Report Name</th>
+                        <th style="padding: 10px;">Parsed Biomarkers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rep in reports %}
+                    <tr style="border-bottom: 1px solid var(--border-color, #eee);">
+                        <td style="padding: 12px 10px; font-weight: 600;">{{ rep.report_date }}</td>
+                        <td style="padding: 12px 10px;">{{ rep.report_name }}</td>
+                        <td style="padding: 12px 10px;">
+                            {% if rep.extracted_data %}
+                                {% for k, v in rep.extracted_data.items() %}
+                                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; margin-right: 6px; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;">
+                                        {{ k | replace('_', ' ') | title }}: <strong>{{ v }}</strong>
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: #999;">No specific values parsed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if reports %}
+<script id="reports-data" type="application/json">
+    {{ reports | tojson | safe }}
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const reportsData = JSON.parse(document.getElementById('reports-data').textContent);
+        const dates = reportsData.map(r => r.report_date);
+        
+        const bloodSugar = reportsData.map(r => (r.extracted_data && r.extracted_data.blood_sugar) ? r.extracted_data.blood_sugar : null);
+        const hemoglobin = reportsData.map(r => (r.extracted_data && r.extracted_data.hemoglobin) ? r.extracted_data.hemoglobin : null);
+        const cholesterol = reportsData.map(r => (r.extracted_data && r.extracted_data.cholesterol) ? r.extracted_data.cholesterol : null);
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Blood Sugar (mg/dL)',
+                        data: bloodSugar,
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.3,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Hemoglobin (g/dL)',
+                        data: hemoglobin,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Cholesterol (mg/dL)',
+                        data: cholesterol,
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.3,
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

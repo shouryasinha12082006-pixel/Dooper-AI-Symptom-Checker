@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Smart Follow-up Reminders - Dooper AI{% endblock %}
+{% block page_title %}Smart Follow-up & Appointment Reminders{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 950px; margin: 0 auto; padding: 20px 0;">
+
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Schedule Follow-up Reminder</h3>
+        
+        <form action="{{ url_for('reminders') }}" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Reminder Type</label>
+                    <select name="reminder_type" class="form-control" required>
+                        <option value="Repeat Consultation">Repeat Consultation</option>
+                        <option value="Medicine Schedule">Medicine Schedule</option>
+                        <option value="Follow-up Lab Tests">Follow-up Lab Tests</option>
+                        <option value="Health Checkup">Health Checkup</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Reminder Details / Notes</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Take Metformin 500mg after breakfast / Repeat HbA1c test" required>
+                </div>
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Date & Time</label>
+                    <input type="datetime-local" name="schedule_time" class="form-control" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600; border-radius: 8px;">
+                <i class="fa-solid fa-clock" style="margin-right: 8px;"></i> Set Smart Reminder
+            </button>
+        </form>
+    </div>
+
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Scheduled Reminders</h3>
+        
+        {% if reminders %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                {% for r in reminders %}
+                <div style="background: var(--bg-hover, #F8FAFC); border-radius: 12px; padding: 16px; border-left: 4px solid #10B981;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+                            {{ r.reminder_type }}
+                        </span>
+                        <span style="font-size: 0.8rem; color: #888;">{{ r.status }}</span>
+                    </div>
+                    <h4 style="margin: 6px 0; font-size: 1.05rem; font-weight: 700;">{{ r.title }}</h4>
+                    <div style="font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-regular fa-clock"></i> {{ r.schedule_time }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #888; margin: 0;">No active reminders scheduled.</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

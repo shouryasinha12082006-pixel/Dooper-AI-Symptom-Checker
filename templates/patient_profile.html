@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Digital Health Profile - Dooper AI Healthcare{% endblock %}
+{% block page_title %}Patient Digital Health Profile{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 950px; margin: 0 auto; padding: 20px 0;">
+    <div class="card" style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.08);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color, #eaeaea);">
+            <div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--text-color);">Persistent Health Profile</h2>
+                <p style="color: var(--text-secondary, #666); margin-top: 4px; font-size: 0.95rem;">This digital profile is automatically integrated into every AI consultation for personalized clinical triage.</p>
+            </div>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; font-size: 0.85rem; padding: 6px 12px; border-radius: 20px; font-weight: 600;">
+                <i class="fa-solid fa-shield-halved"></i> HIPAA Compliant Encrypted
+            </span>
+        </div>
+
+        <form action="{{ url_for('patient_profile') }}" method="POST">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Height (cm)</label>
+                    <input type="text" name="height" class="form-control" value="{{ profile.height or '' }}" placeholder="e.g. 175">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Weight (kg)</label>
+                    <input type="text" name="weight" class="form-control" value="{{ profile.weight or '' }}" placeholder="e.g. 70">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Blood Group</label>
+                    <select name="blood_group" class="form-control">
+                        <option value="">Select Blood Group</option>
+                        {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                            <option value="{{ bg }}" {% if profile.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Role / Access Level</label>
+                    <select name="role" class="form-control">
+                        <option value="patient" {% if profile.role == 'patient' or not profile.role %}selected{% endif %}>Patient</option>
+                        <option value="doctor" {% if profile.role == 'doctor' %}selected{% endif %}>Doctor / Clinician</option>
+                        <option value="admin" {% if profile.role == 'admin' %}selected{% endif %}>Healthcare Administrator</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-allergies" style="color: #EF4444;"></i> Allergies</label>
+                    <textarea name="allergies" class="form-control" rows="3" placeholder="e.g. Penicillin, Peanuts, Sulfa drugs">{{ profile.allergies or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-heart-pulse" style="color: #3B82F6;"></i> Chronic Diseases</label>
+                    <textarea name="chronic_diseases" class="form-control" rows="3" placeholder="e.g. Hypertension, Type 2 Diabetes, Asthma">{{ profile.chronic_diseases or '' }}</textarea>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-pills" style="color: #10B981;"></i> Current Medications</label>
+                    <textarea name="current_medications" class="form-control" rows="3" placeholder="e.g. Metformin 500mg, Lisinopril 10mg, Aspirin">{{ profile.current_medications or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-scalpel" style="color: #8B5CF6;"></i> Previous Surgeries</label>
+                    <textarea name="previous_surgeries" class="form-control" rows="3" placeholder="e.g. Appendectomy (2018), Knee Arthroscopy (2021)">{{ profile.previous_surgeries or '' }}</textarea>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-people-roof" style="color: #F59E0B;"></i> Family Medical History</label>
+                    <textarea name="family_history" class="form-control" rows="3" placeholder="e.g. Father had CAD, Mother had Type 2 Diabetes">{{ profile.family_history or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-person-running" style="color: #06B6D4;"></i> Lifestyle & Habits</label>
+                    <textarea name="lifestyle_info" class="form-control" rows="3" placeholder="e.g. Sedentary job, 30 min daily walk, high protein diet">{{ profile.lifestyle_info or '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 28px;">
+                <label style="font-weight: 600; margin-bottom: 6px; display: block;"><i class="fa-solid fa-wine-glass" style="color: #EC4899;"></i> Smoking / Alcohol Status</label>
+                <input type="text" name="smoking_alcohol_status" class="form-control" value="{{ profile.smoking_alcohol_status or '' }}" placeholder="e.g. Non-smoker, Social drinker (1-2 units/week)">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-weight: 600; font-size: 1rem; border-radius: 10px;">
+                    <i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i> Save Health Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

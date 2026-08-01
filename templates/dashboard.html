@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Dooper AI Symptom Checker{% endblock %}
+{% block page_title %}Symptom Checker Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="card" style="background: linear-gradient(135deg, var(--primary-color) 0%, #a8040d 100%); color: white; border: none; padding: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Hello, {{ user_name }}!</h2>
+            <p style="font-size: 15px; opacity: 0.9; max-width: 600px; line-height: 1.5;">
+                Welcome to your Dooper AI Health assistant. Enter your symptoms below to get an instant AI assessment, severity classification, and doctor recommendations.
+            </p>
+        </div>
+        <div style="background-color: rgba(255,255,255,0.15); padding: 12px 24px; border-radius: 12px; backdrop-filter: blur(10px);">
+            <div style="font-size: 12px; text-transform: uppercase; font-weight: 700; opacity: 0.8;">Total Checked</div>
+            <div style="font-size: 32px; font-weight: 800;">{{ stats.total }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Grid -->
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-title">Total Assessments</span>
+            <div class="stat-icon total"><i class="fa-solid fa-clipboard-check"></i></div>
+        </div>
+        <span class="stat-value">{{ stats.total }}</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-title">Mild Cases</span>
+            <div class="stat-icon mild"><i class="fa-solid fa-circle-info"></i></div>
+        </div>
+        <span class="stat-value">{{ stats.mild }}</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-title">Moderate Cases</span>
+            <div class="stat-icon moderate"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+        <span class="stat-value">{{ stats.moderate }}</span>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <span class="stat-title">Severe Cases</span>
+            <div class="stat-icon severe"><i class="fa-solid fa-circle-exclamation"></i></div>
+        </div>
+        <span class="stat-value">{{ stats.severe }}</span>
+    </div>
+</div>
+
+<!-- Main Split Layout -->
+<div class="split-layout">
+    <!-- Left Column: Checker Form -->
+    <div class="card">
+        <h3 class="card-title">
+            <i class="fa-solid fa-heart-pulse" style="color: var(--primary-color);"></i>
+            Start New Health Assessment
+        </h3>
+        
+        <form action="{{ url_for('dashboard') }}" method="POST" onsubmit="compileSymptomsAndSubmit(event)" style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Hidden field for consolidated symptoms -->
+            <input type="hidden" id="consolidated_symptoms" name="symptoms">
+
+            <!-- Section 1: Demographics & Vitals -->
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 10px;">
+                <h4 style="font-size: 16px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-address-card"></i> 1. Demographics & Vitals
+                </h4>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age" class="form-label">Age *</label>
+                    <input type="number" id="age" name="age" class="form-control" placeholder="Years" min="1" max="120" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gender" class="form-label">Gender *</label>
+                    <select id="gender" name="gender" class="form-control" required onchange="togglePregnancyField()">
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="weight" class="form-label">Weight (kg)</label>
+                    <input type="number" id="weight" name="weight" class="form-control" placeholder="e.g. 70" min="1" max="300">
+                </div>
+                
+                <div class="form-group">
+                    <label for="height" class="form-label">Height (cm)</label>
+                    <input type="number" id="height" name="height" class="form-control" placeholder="e.g. 175" min="50" max="250">
+                </div>
+            </div>
+
+            <!-- Section 2: Clinical History -->
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 15px; margin-bottom: 10px;">
+                <h4 style="font-size: 16px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-notes-medical"></i> 2. Clinical History
+                </h4>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="existing_conditions" class="form-label">Existing Medical Conditions</label>
+                    <input type="text" id="existing_conditions" name="existing_conditions" class="form-control" placeholder="e.g. Diabetes, Hypertension">
+                </div>
+                
+                <div class="form-group">
+                    <label for="current_medications" class="form-label">Current Medications</label>
+                    <input type="text" id="current_medications" name="current_medications" class="form-control" placeholder="e.g. Metformin, Aspirin">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="allergies" class="form-label">Allergies</label>
+                    <input type="text" id="allergies" name="allergies" class="form-control" placeholder="e.g. Penicillin, Peanuts">
+                </div>
+                
+                <div class="form-group" id="pregnancy-group" style="display: none;">
+                    <label for="pregnancy_status" class="form-label">Pregnancy Status</label>
+                    <select id="pregnancy_status" name="pregnancy_status" class="form-control">
+                        <option value="Not Pregnant" selected>Not Pregnant</option>
+                        <option value="First Trimester">Pregnant - First Trimester</option>
+                        <option value="Second Trimester">Pregnant - Second Trimester</option>
+                        <option value="Third Trimester">Pregnant - Third Trimester</option>
+                        <option value="Postpartum">Postpartum (0-6 weeks)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Section 3: Symptom Profile -->
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-top: 15px; margin-bottom: 10px;">
+                <h4 style="font-size: 16px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-heart-pulse"></i> 3. Symptom Profile
+                </h4>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="duration" class="form-label">Duration of Symptoms *</label>
+                    <input type="text" id="duration" name="duration" class="form-control" placeholder="e.g. 3 days, 1 week" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; justify-content: space-between;">
+                        <span>Pain Level (1-10)</span>
+                        <span id="pain-val" style="font-weight: 700; color: var(--primary-color);">5</span>
+                    </label>
+                    <input type="range" id="pain_level" name="pain_level" class="form-control" min="1" max="10" value="5" oninput="document.getElementById('pain-val').innerText = this.value" style="padding: 5px 0;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Primary Symptoms (Select all that apply) *</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; padding: 10px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Fever" id="fever-checkbox" class="sym-checkbox"> Fever
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Headache" class="sym-checkbox"> Headache
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Chest Pain" class="sym-checkbox"> Chest Pain
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Cough" class="sym-checkbox"> Cough
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Vomiting" class="sym-checkbox"> Vomiting
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Dizziness" class="sym-checkbox"> Dizziness
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="primary_syms" value="Shortness of Breath" class="sym-checkbox"> Shortness of Breath
+                    </label>
+                </div>
+                
+                <!-- Dynamic Fever Details Panel -->
+                <div id="fever-details-panel" style="display: none; margin-top: 15px; padding: 18px; background: linear-gradient(135deg, rgba(9, 181, 125, 0.05), rgba(9, 181, 125, 0.01)); border: 1px dashed var(--border-color); border-radius: 12px; transition: all 0.3s ease;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
+                        <i class="fa-solid fa-thermometer"></i> Fever Details
+                    </h4>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                        <div class="form-group" style="margin: 0; flex: 1; min-width: 180px;">
+                            <label for="temperature_val" class="form-label" style="font-size: 12px; margin-bottom: 5px;">Exact Body Temperature</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" step="0.1" id="temperature_val" name="temperature" class="form-control" placeholder="e.g. 98.6" style="flex: 1;" oninput="updateFeverClassification()">
+                                <div style="display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-color);">
+                                    <button type="button" id="unit-f" class="btn-unit active" onclick="setTempUnit('F')" style="padding: 6px 12px; font-size: 12px; border: none; background: var(--primary-color); color: white; cursor: pointer; font-weight: 600; transition: var(--transition);">°F</button>
+                                    <button type="button" id="unit-c" class="btn-unit" onclick="setTempUnit('C')" style="padding: 6px 12px; font-size: 12px; border: none; background: none; color: var(--text-color); cursor: pointer; font-weight: 600; transition: var(--transition);">°C</button>
+                                </div>
+                                <input type="hidden" id="temperature_unit" name="temperature_unit" value="F">
+                            </div>
+                        </div>
+                        
+                        <div style="flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 5px;">
+                            <span class="form-label" style="font-size: 12px; margin: 0;">Clinical Fever Classification</span>
+                            <div id="fever-badge" class="badge" style="padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; text-align: center; background-color: var(--border-color); color: var(--text-muted); transition: all 0.3s ease;">
+                                Enter temperature to classify
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label for="symptoms_desc" class="form-label">Secondary Symptoms / Detailed Description</label>
+                    <button type="button" id="micBtn" class="voice-input-btn" onclick="startVoiceInput('symptoms_desc')" title="Speak symptoms">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                </div>
+                <textarea id="symptoms_desc" class="form-control" rows="3" placeholder="Describe secondary symptoms or specify how you feel (e.g. sore throat, runny nose, sweating, chills, muscle aches)"></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="btn btn-primary btn-interactive" style="align-self: flex-start; padding: 14px 28px; transition: var(--transition);">
+                <i class="fa-solid fa-microchip-vision"></i> Analyze Symptoms
+            </button>
+        </form>
+    </div>
+
+    <!-- Script to compile inputs before submission -->
+    <script>
+        function togglePregnancyField() {
+            const gender = document.getElementById('gender').value;
+            const pregGroup = document.getElementById('pregnancy-group');
+            if (gender === 'Female') {
+                pregGroup.style.display = 'block';
+            } else {
+                pregGroup.style.display = 'none';
+                document.getElementById('pregnancy_status').value = '';
+            }
+        }
+
+        let currentUnit = 'F';
+        
+        function setTempUnit(unit) {
+            currentUnit = unit;
+            document.getElementById('temperature_unit').value = unit;
+            
+            const btnF = document.getElementById('unit-f');
+            const btnC = document.getElementById('unit-c');
+            
+            if (unit === 'F') {
+                btnF.classList.add('active');
+                btnF.style.background = 'var(--primary-color)';
+                btnF.style.color = 'white';
+                btnC.classList.remove('active');
+                btnC.style.background = 'none';
+                btnC.style.color = 'var(--text-color)';
+            } else {
+                btnC.classList.add('active');
+                btnC.style.background = 'var(--primary-color)';
+                btnC.style.color = 'white';
+                btnF.classList.remove('active');
+                btnF.style.background = 'none';
+                btnF.style.color = 'var(--text-color)';
+            }
+            
+            // Convert existing value if present
+            const tempInput = document.getElementById('temperature_val');
+            const val = parseFloat(tempInput.value);
+            if (!isNaN(val)) {
+                if (unit === 'F') {
+                    // C to F
+                    tempInput.value = ((val * 9/5) + 32).toFixed(1);
+                } else {
+                    // F to C
+                    tempInput.value = ((val - 32) * 5/9).toFixed(1);
+                }
+            }
+            updateFeverClassification();
+        }
+        
+        function updateFeverClassification() {
+            const tempInput = document.getElementById('temperature_val');
+            const badge = document.getElementById('fever-badge');
+            const val = parseFloat(tempInput.value);
+            
+            if (isNaN(val) || val <= 0) {
+                badge.innerText = "Enter temperature to classify";
+                badge.style.backgroundColor = "var(--border-color)";
+                badge.style.color = "var(--text-muted)";
+                return;
+            }
+            
+            let level = "Normal";
+            let color = "#28a745"; // Success green
+            
+            if (currentUnit === 'F') {
+                if (val >= 101.0) {
+                    level = "High-Grade Fever (≥ 101.0°F)";
+                    color = "var(--danger-color, #dc3545)";
+                } else if (val >= 99.1) {
+                    level = "Mild / Low-Grade Fever (99.1°F - 100.9°F)";
+                    color = "var(--warning-color, #ffc107)";
+                } else {
+                    level = "Normal Temperature (< 99.1°F)";
+                    color = "#28a745";
+                }
+            } else { // Celsius
+                if (val >= 38.4) {
+                    level = "High-Grade Fever (≥ 38.4°C)";
+                    color = "var(--danger-color, #dc3545)";
+                } else if (val >= 37.3) {
+                    level = "Mild / Low-Grade Fever (37.3°C - 38.3°C)";
+                    color = "var(--warning-color, #ffc107)";
+                } else {
+                    level = "Normal Temperature (< 37.3°C)";
+                    color = "#28a745";
+                }
+            }
+            
+            badge.innerText = level;
+            badge.style.backgroundColor = color;
+            badge.style.color = "white";
+        }
+
+        // Toggle panel when checkbox state changes
+        document.getElementById('fever-checkbox').addEventListener('change', function() {
+            const panel = document.getElementById('fever-details-panel');
+            if (this.checked) {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+                document.getElementById('temperature_val').value = '';
+                updateFeverClassification();
+            }
+        });
+
+        function compileSymptomsAndSubmit(e) {
+            e.preventDefault();
+            
+            const checkboxes = document.querySelectorAll('.sym-checkbox:checked');
+            const primarySyms = Array.from(checkboxes).map(cb => cb.value);
+            const secondaryDesc = document.getElementById('symptoms_desc').value.trim();
+            
+            if (primarySyms.length === 0 && !secondaryDesc) {
+                alert("Please select at least one primary symptom or describe your symptoms.");
+                return;
+            }
+            
+            let consolidated = "";
+            if (primarySyms.length > 0) {
+                consolidated += "Primary Symptoms: " + primarySyms.join(", ") + ". ";
+            }
+            
+            const feverChecked = document.getElementById('fever-checkbox').checked;
+            const tempVal = document.getElementById('temperature_val').value.trim();
+            if (feverChecked && tempVal) {
+                const tempUnit = document.getElementById('temperature_unit').value;
+                consolidated += `Patient body temperature: ${tempVal}°${tempUnit}. `;
+                const temp = parseFloat(tempVal);
+                if (tempUnit === 'F') {
+                    if (temp >= 101.0) {
+                        consolidated += "This is classified as high fever. ";
+                    } else if (temp >= 99.1) {
+                        consolidated += "This is classified as mild/normal fever. ";
+                    }
+                } else {
+                    if (temp >= 38.4) {
+                        consolidated += "This is classified as high fever. ";
+                    } else if (temp >= 37.3) {
+                        consolidated += "This is classified as mild/normal fever. ";
+                    }
+                }
+            }
+            
+            if (secondaryDesc) {
+                consolidated += "Description: " + secondaryDesc;
+            }
+            
+            document.getElementById('consolidated_symptoms').value = consolidated;
+            
+            // Show loading spinner on button
+            const btn = document.getElementById("submitBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing Assessment...';
+            
+            // Submit form
+            e.target.submit();
+        }
+    </script>
+    
+    <!-- Right Column: Recent Assessments & Bookings -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--text-muted);"></i>
+                Recent Checks
+            </h3>
+            
+            {% if recent_assessments %}
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    {% for item in recent_assessments[:4] %}
+                        <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; transition: var(--transition);">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <h4 style="font-weight: 700; font-size: 15px; color: var(--text-color);">{{ item.condition_name }}</h4>
+                                    <span style="font-size: 11px; color: var(--text-muted);">{{ item.created_at[:10] }}</span>
+                                </div>
+                                <span class="badge badge-{{ item.severity | lower }}">{{ item.severity }}</span>
+                            </div>
+                            
+                            <div style="font-size: 12px; color: var(--text-muted);">
+                                <strong>Specialty:</strong> {{ item.recommended_specialty }}
+                            </div>
+                            
+                            <a href="{{ url_for('assessment_detail', assessment_id=item.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; align-self: flex-start;">
+                                <i class="fa-solid fa-file-medical"></i> Details
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 32px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                    No previous assessments found.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-calendar-check" style="color: var(--text-muted);"></i>
+                Scheduled Appointments
+            </h3>
+            {% if bookings %}
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    {% for b in bookings %}
+                        <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+                            <div style="font-weight: 700; font-size: 14px;">{{ b.doctor_name }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">Specialty: {{ b.specialist_type }}</div>
+                            <div style="font-size: 11px; color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-clock"></i> {{ b.appointment_date }}</div>
+                            <span class="badge badge-mild" style="align-self: flex-start; margin-top: 5px;">Scheduled</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 13px;">
+                    No scheduled appointments.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

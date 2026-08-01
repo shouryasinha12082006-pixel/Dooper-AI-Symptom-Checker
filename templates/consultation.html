@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive Consultation - Dooper AI{% endblock %}
+{% block page_title %}Clinical Triage & Intake{% endblock %}
+
+{% block content %}
+{% if consultation.status == 'emergency' %}
+<div class="card" style="border: 2px solid var(--danger-color, #EF4444); background-color: var(--danger-light, #FEE2E2); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 30px; transition: var(--transition);">
+    <div style="font-size: 64px; color: var(--danger-color, #EF4444); margin-bottom: 20px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h2 style="color: var(--danger-color, #EF4444); font-size: 28px; font-weight: 800; margin-bottom: 15px;">CRITICAL EMERGENCY DETECTED</h2>
+    <p style="font-size: 16px; line-height: 1.6; max-width: 650px; margin: 0 auto 25px auto; font-weight: 500;">
+        Based on your symptoms or details, you may be experiencing a critical medical emergency. 
+        <strong>Please stop this questionnaire immediately and seek immediate emergency care.</strong>
+    </p>
+    
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
+        <div style="background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 15px 25px; border-radius: 12px; min-width: 200px;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;">EMERGENCY HELPLINE</div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--danger-color, #EF4444);">112 / 911</div>
+        </div>
+        <div style="background-color: var(--card-bg); border: 1px solid var(--border-color); padding: 15px 25px; border-radius: 12px; min-width: 200px;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;">DOOPER AMBULANCE</div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--primary-color);">108</div>
+        </div>
+    </div>
+    
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Return to Portal</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="consultation-layout" style="display: grid; grid-template-columns: 1fr 340px; gap: 30px; height: calc(100vh - 220px);">
+    <!-- Chat Section -->
+    <div style="display: flex; flex-direction: column; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; height: 100%;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <h3 style="font-size: 16px; font-weight: 700;">Intake Assessment Chat</h3>
+                <p style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-circle" style="color: var(--success-color); font-size: 8px;"></i> Active Consultation Session</p>
+            </div>
+            
+            {% if consultation.status == 'active' %}
+            <button class="btn btn-secondary" onclick="finalizeConsultationEarly()" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-flag-checkered"></i> Finish Intake</button>
+            {% endif %}
+        </div>
+        
+        <div class="chat-messages" id="consultation-chat-container" style="flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+            {% for m in messages %}
+            <div style="display: flex; flex-direction: column; max-width: 75%; {% if m.sender == 'user' %}align-self: flex-end;{% else %}align-self: flex-start;{% endif %}">
+                <div style="padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.5; {% if m.sender == 'user' %}background-color: var(--primary-color); color: white; border-bottom-right-radius: 4px;{% else %}background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-bottom-left-radius: 4px;{% endif %}">
+                    {{ m.message }}
+                </div>
+                <span style="font-size: 10px; color: var(--text-muted); margin-top: 4px; padding: 0 4px; {% if m.sender == 'user' %}text-align: right;{% endif %}">
+                    {{ m.created_at }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if consultation.status == 'active' %}
+        <div style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; gap: 12px; align-items: center; background-color: var(--card-bg);">
+            <button class="btn btn-secondary" id="mic-btn" onclick="startVoiceRecognition('consultation-input')" style="padding: 12px 15px;" title="Speak Symptoms">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <input class="form-control" type="text" id="consultation-input" placeholder="Respond to the AI assistant here..." onkeydown="handleInputKeypress(event)" style="flex-grow: 1;">
+            <button class="btn btn-primary" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Sidebar -->
+    <div style="display: flex; flex-direction: column; gap: 24px; overflow-y: auto;">
+        <div class="card">
+            <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;"><i class="fa-solid fa-user-injured" style="color: var(--primary-color);"></i> Patient Case</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Age / Gender:</span>
+                    <span style="font-weight: 600;">{{ consultation.age }} / {{ consultation.gender }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Duration:</span>
+                    <span style="font-weight: 600;">{{ consultation.duration }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Temperature:</span>
+                    <span style="font-weight: 600;">{% if consultation.temperature %}{{ consultation.temperature }}°{{ consultation.temperature_unit }}{% else %}Not Provided{% endif %}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Pain Level:</span>
+                    <span style="font-weight: 600; color: var(--primary-color);">{{ consultation.pain_level }}/10</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Pregnancy Status:</span>
+                    <span style="font-weight: 600;">{{ consultation.pregnancy_status or 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;"><i class="fa-solid fa-file-prescription" style="color: var(--primary-color);"></i> Clinical Context</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                <div>
+                    <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 2px;">Conditions</div>
+                    <div style="font-weight: 500;">{{ consultation.existing_conditions or 'None' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 2px;">Allergies</div>
+                    <div style="font-weight: 500;">{{ consultation.allergies or 'None' }}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 2px;">Medications</div>
+                    <div style="font-weight: 500;">{{ consultation.current_medications or 'None' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Scroll to bottom
+    const box = document.getElementById('consultation-chat-container');
+    if (box) box.scrollTop = box.scrollHeight;
+
+    function handleInputKeypress(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('consultation-input');
+        if (!input) return;
+        const msg = input.value.trim();
+        if (!msg) return;
+        
+        input.value = '';
+        appendMessage('user', msg);
+
+        fetch('/assessment/{{ consultation.id }}/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'completed') {
+                window.location.reload();
+            } else if (data.status === 'emergency') {
+                window.location.reload();
+            } else if (data.status === 'active') {
+                appendMessage('ai', data.reply);
+            }
+        });
+    }
+
+    function appendMessage(sender, text) {
+        const container = document.getElementById('consultation-chat-container');
+        if (!container) return;
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.maxWidth = '75%';
+        wrapper.style.alignSelf = sender === 'user' ? 'flex-end' : 'flex-start';
+
+        const bubble = document.createElement('div');
+        bubble.textContent = text;
+        bubble.style.padding = '14px 18px';
+        bubble.style.borderRadius = '16px';
+        bubble.style.fontSize = '14px';
+        bubble.style.lineHeight = '1.5';
+        
+        if (sender === 'user') {
+            bubble.style.backgroundColor = 'var(--primary-color)';
+            bubble.style.color = 'white';
+            bubble.style.borderBottomRightRadius = '4px';
+        } else {
+            bubble.style.backgroundColor = 'var(--bg-color)';
+            bubble.style.color = 'var(--text-color)';
+            bubble.style.border = '1px solid var(--border-color)';
+            bubble.style.borderBottomLeftRadius = '4px';
+        }
+
+        const meta = document.createElement('span');
+        meta.textContent = time;
+        meta.style.fontSize = '10px';
+        meta.style.color = 'var(--text-muted)';
+        meta.style.marginTop = '4px';
+        meta.style.padding = '0 4px';
+        if (sender === 'user') meta.style.textAlign = 'right';
+
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(meta);
+        container.appendChild(wrapper);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function finalizeConsultationEarly() {
+        if (confirm("Do you want to skip remaining questions and view report?")) {
+            fetch('/assessment/{{ consultation.id }}/complete', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
